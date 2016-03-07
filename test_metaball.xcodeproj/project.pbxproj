@@ -13,6 +13,9 @@
 		610370351C8D745B00658331 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 610370331C8D745B00658331 /* Main.storyboard */; };
 		610370371C8D745B00658331 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 610370361C8D745B00658331 /* Assets.xcassets */; };
 		6103703A1C8D745B00658331 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 610370381C8D745B00658331 /* LaunchScreen.storyboard */; };
+		610370431C8D747300658331 /* MetaBallView.m in Sources */ = {isa = PBXBuildFile; fileRef = 610370421C8D747300658331 /* MetaBallView.m */; };
+		610370461C8D752B00658331 /* MetaBall.m in Sources */ = {isa = PBXBuildFile; fileRef = 610370451C8D752B00658331 /* MetaBall.m */; };
+		610370491C8D75F500658331 /* MetaBallModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 610370481C8D75F500658331 /* MetaBallModel.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +29,12 @@
 		610370361C8D745B00658331 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		610370391C8D745B00658331 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		6103703B1C8D745B00658331 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		610370411C8D747300658331 /* MetaBallView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MetaBallView.h; sourceTree = "<group>"; };
+		610370421C8D747300658331 /* MetaBallView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MetaBallView.m; sourceTree = "<group>"; };
+		610370441C8D752B00658331 /* MetaBall.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MetaBall.h; sourceTree = "<group>"; };
+		610370451C8D752B00658331 /* MetaBall.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MetaBall.m; sourceTree = "<group>"; };
+		610370471C8D75F500658331 /* MetaBallModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MetaBallModel.h; path = ../MetaBallModel.h; sourceTree = "<group>"; };
+		610370481C8D75F500658331 /* MetaBallModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MetaBallModel.m; path = ../MetaBallModel.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +69,12 @@
 			children = (
 				6103702D1C8D745B00658331 /* AppDelegate.h */,
 				6103702E1C8D745B00658331 /* AppDelegate.m */,
+				610370441C8D752B00658331 /* MetaBall.h */,
+				610370451C8D752B00658331 /* MetaBall.m */,
+				610370471C8D75F500658331 /* MetaBallModel.h */,
+				610370481C8D75F500658331 /* MetaBallModel.m */,
+				610370411C8D747300658331 /* MetaBallView.h */,
+				610370421C8D747300658331 /* MetaBallView.m */,
 				610370301C8D745B00658331 /* ViewController.h */,
 				610370311C8D745B00658331 /* ViewController.m */,
 				610370331C8D745B00658331 /* Main.storyboard */,
@@ -151,6 +166,9 @@
 			files = (
 				610370321C8D745B00658331 /* ViewController.m in Sources */,
 				6103702F1C8D745B00658331 /* AppDelegate.m in Sources */,
+				610370431C8D747300658331 /* MetaBallView.m in Sources */,
+				610370491C8D75F500658331 /* MetaBallModel.m in Sources */,
+				610370461C8D752B00658331 /* MetaBall.m in Sources */,
 				6103702C1C8D745B00658331 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
