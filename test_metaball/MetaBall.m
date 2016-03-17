@@ -10,7 +10,7 @@
 
 @implementation MetaBall
 
--(instancetype)initWithSize:(CGFloat)size location:(CGPoint)location
+-(instancetype)initWithSize:(float)size location:(CGPoint)location
 {
     self = [super init];
     self.size = size;
@@ -18,4 +18,8 @@
     return self;
 }
 
+-(NSString *)description
+{
+    return [NSString stringWithFormat:@"MetaBall[size=%.2f, location=(%.2f,%.2f)]", self.size, self.location.x, self.location.y];
+}
 @end

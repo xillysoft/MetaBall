@@ -25,4 +25,10 @@
     return self;
 }
 
+-(NSString *)description
+{
+    return [NSString stringWithFormat:@"MetaBallModel[goo=%.2f, threshold=%.2f, numOfMetaBalls=%d]", self.goo, self.threshold, self.metaBalls.count];
+    
+}
+
 @end

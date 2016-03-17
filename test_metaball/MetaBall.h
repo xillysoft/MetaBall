@@ -11,9 +11,9 @@
 
 @interface MetaBall : NSObject
 
-@property CGFloat size; //size of this metaball
+@property float size; //size of this metaball, the radius.
 @property CGPoint location; //location of this metabal
 
--(instancetype)initWithSize:(CGFloat)size location:(CGPoint)location NS_DESIGNATED_INITIALIZER;
+-(instancetype)initWithSize:(float)size location:(CGPoint)location;
 
 @end

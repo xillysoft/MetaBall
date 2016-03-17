@@ -13,4 +13,10 @@
 
 @property(weak) MetaBallModel *metaBallModel;
 
+
+@property(readwrite, nonatomic) CGFloat threshold;
+@property(readwrite, nonatomic) CGFloat gridSize;
+@property(readwrite, nonatomic) BOOL interpolation;
+@property(readwrite, nonatomic) BOOL useNaivePainting;
+
 @end

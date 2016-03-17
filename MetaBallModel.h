@@ -13,8 +13,8 @@
 @interface MetaBallModel : NSObject
 
 @property NSMutableArray<MetaBall *> *metaBalls; //metaballs of this model
-@property CGFloat goo; //"goo"-value, which affects the way how metaballs are drawn.
-@property CGFloat threshold; //theshold for metaballs
+@property float goo; //"goo"-value, which affects the way how metaballs are drawn.
+@property float threshold; //theshold for metaballs
 
 //initialize with no metaball
 -(instancetype)init NS_DESIGNATED_INITIALIZER;
