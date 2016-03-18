@@ -46,7 +46,11 @@ int _rand(int low, int high)
         float minMetaballSize = 6;
         float maxMetaballSize = 40;
         for(int i=0; i<numberOfMetaBalls; i++){
-            MetaBall *metaBall = [[MetaBall alloc] initWithSize:_rand(minMetaballSize, maxMetaballSize) location:CGPointMake(_rand(maxMetaballSize, width-maxMetaballSize*2), _rand(maxMetaballSize, height-maxMetaballSize*2))];
+            const float size = _rand(minMetaballSize, maxMetaballSize);
+            const float x = _rand(maxMetaballSize, width-maxMetaballSize*2);
+            const float y = _rand(maxMetaballSize, height-maxMetaballSize*2);
+            MetaBall *metaBall = [[MetaBall alloc] initWithSize:size x:x  y:y z:0];
+
             [self.metaBallModel.metaBalls addObject:metaBall];
         }
     }

@@ -137,7 +137,7 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
     int maxMetaballSize = 50;
     float size = (arc4random() % (maxMetaballSize-minMetaballSize)) + minMetaballSize;
 
-    MetaBall *metaBall = [[MetaBall alloc] initWithSize:size location:location];
+    MetaBall *metaBall = [[MetaBall alloc] initWithSize:size x:location.x y:location.y z:0];
     [self.metaBallModel.metaBalls addObject:metaBall];
     [self setNeedsDisplay];
 }
@@ -150,8 +150,8 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
         //determine which metaball will be translated
         for(int i=0; i<self.metaBallModel.metaBalls.count; i++){
             MetaBall *metaBall = self.metaBallModel.metaBalls[i];
-            float dx = pan.x - metaBall.location.x;
-            float dy = pan.y - metaBall.location.y;
+            float dx = pan.x - metaBall.x;
+            float dy = pan.y - metaBall.y;
             if((dx*dx+dy*dy) <= metaBall.size*metaBall.size){ //calculate whether pan(x,y) in this metaball circle
                 self.panIndex = i;
                 break;
@@ -165,10 +165,8 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
         if(self.panIndex != -1){
             float dx = pan.x - self.panLastLocation.x; //delta distance from last pan location
             float dy = pan.y - self.panLastLocation.y;
-            CGPoint location = self.metaBallModel.metaBalls[self.panIndex].location;
-            location.x += dx;
-            location.y += dy;
-            self.metaBallModel.metaBalls[self.panIndex].location = location;
+            self.metaBallModel.metaBalls[self.panIndex].x += dx;
+            self.metaBallModel.metaBalls[self.panIndex].y += dy;
             self.panLastLocation = pan; //set as last pan loation
             
             [self setNeedsDisplay];
@@ -197,9 +195,8 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
                 //compute metabball for location (x,y)
                 float sum = 0;
                 for(MetaBall *metaBall in self.metaBallModel.metaBalls){
-                    const CGPoint loc = metaBall.location;
                     const BOOL bUseGoo = YES;
-                    const float dist = distance(x, y, loc.x, loc.y);
+                    const float dist = distance(x, y, metaBall.x, metaBall.y);
                     float intensity;
                     if(bUseGoo)
                         intensity = metaBall.size/pow(dist, goo);
@@ -242,8 +239,8 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
     //compute and store grid values
     const int numRowGrids = size.height/grid;
     const int numColumnGrids = size.width/grid;
-    NSMutableArray<NSNumber *> *gridValues = [NSMutableArray arrayWithCapacity:(numRowGrids+1)*(numColumnGrids+1)];
-    NSMutableArray<NSNumber *> *gridBinaries = [NSMutableArray arrayWithCapacity:gridValues.count];
+    float *gridValues = (float *)malloc(sizeof(float)*(numRowGrids+1)*(numColumnGrids+1));
+    BOOL *gridBinaries = (BOOL *)malloc(sizeof(BOOL)*(numRowGrids+1)*(numColumnGrids+1));
     for(int r=0; r < numRowGrids + 1; r++){
         for(int c=0; c < numColumnGrids + 1; c++){
             const float x = c*grid;
@@ -253,16 +250,16 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
                 float intensity = [metaBall intensityWithX:x y:y goo:goo];
                 sumxy += intensity;
             }
-            [gridValues addObject:@(sumxy)];
+            gridValues[r*(numColumnGrids+1)+c] = sumxy;
             BOOL b = sumxy-threshold >= 0;
-            [gridBinaries addObject:@(b)];
+            gridBinaries[r*(numColumnGrids+1)+c] = b;
         }
     }
     
     
     //compute and store grid central values
-    NSMutableArray<NSNumber *> *centralGridValues = [NSMutableArray arrayWithCapacity:numRowGrids*numColumnGrids];
-    NSMutableArray<NSNumber *> *centralGridBinaries = [NSMutableArray arrayWithCapacity:centralGridValues.count];
+    float *centralGridValues = (float *)malloc(sizeof(float)*numRowGrids*numColumnGrids);
+    BOOL *centralBinaries = (BOOL *)malloc(sizeof(BOOL)*numRowGrids*numColumnGrids);
     float xCentralOff = grid/2;
     float yCentralOff = grid/2;
     for(int r=0; r<numRowGrids; r++){
@@ -274,9 +271,9 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
                 float v = [metaBall intensityWithX:x y:y goo:goo];
                 sumxy += v;
             }
-            [centralGridValues addObject:@(sumxy)];
+            centralGridValues[r*numColumnGrids+c] = sumxy;
             BOOL b = sumxy-threshold >= 0;
-            [centralGridBinaries addObject:@(b)];
+            centralBinaries[r*numColumnGrids+c] = b;
         }
     }
     
@@ -289,17 +286,17 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
             const float y1 = y0+grid;
             
             const int offset = r*(numColumnGrids+1)+c;
-            const float d0 = gridValues[offset].floatValue; //[r][c];
-            const float d1 = gridValues[offset+1].floatValue; //[r][c+1]
-            const float d2 = gridValues[offset+numColumnGrids+1+1].floatValue; //[r+1][c+1]
-            const float d3 = gridValues[offset+numColumnGrids+1].floatValue; //[r+1][c]
-            const float dCentral = centralGridValues[r*numColumnGrids+c].floatValue; //[r][c]
+            const float d0 = gridValues[offset]; //[r][c];
+            const float d1 = gridValues[offset+1]; //[r][c+1]
+            const float d2 = gridValues[offset+numColumnGrids+1+1]; //[r+1][c+1]
+            const float d3 = gridValues[offset+numColumnGrids+1]; //[r+1][c]
+            const float dCentral = centralGridValues[r*numColumnGrids+c]; //[r][c]
             
-            const BOOL b0 = gridBinaries[offset].boolValue; //[r][c];
-            const BOOL b1 = gridBinaries[offset+1].boolValue; //[r][c+1]
-            const BOOL b2 = gridBinaries[offset+numColumnGrids+1+1].boolValue; //[r+1][c+1]
-            const BOOL b3 = gridBinaries[offset+numColumnGrids+1].boolValue; //[r+1][c]
-            const BOOL bCentral = centralGridBinaries[r*numColumnGrids+c].boolValue; //[r][c]
+            const BOOL b0 = gridBinaries[offset]; //[r][c];
+            const BOOL b1 = gridBinaries[offset+1]; //[r][c+1]
+            const BOOL b2 = gridBinaries[offset+numColumnGrids+1+1]; //[r+1][c+1]
+            const BOOL b3 = gridBinaries[offset+numColumnGrids+1]; //[r+1][c]
+            const BOOL bCentral = centralBinaries[r*numColumnGrids+c]; //[r][c]
             unsigned index = b0 | (b1<<1) | (b2<<2) | (b3<<3); //4 bit representation, 16 cases totally
 
             int half = grid/2;
@@ -317,7 +314,9 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
             
             BOOL bFillMarchingSquare = YES;
             if(bFillMarchingSquare) {
-                CGContextSetFillColorWithColor(context, [UIColor colorWithRed:1 green:0 blue:0 alpha:0.5].CGColor);
+                static UIColor *fillColor;
+                if(!fillColor) fillColor = [UIColor colorWithRed:1 green:0 blue:0 alpha:0.5];
+                CGContextSetFillColorWithColor(context, fillColor.CGColor);
                 CGContextSetStrokeColorWithColor(context, [UIColor yellowColor].CGColor);
                 CGContextBeginPath(context);
                 
@@ -398,7 +397,9 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
                     CGContextStrokeRect(context, gridRect);
                     
                     if(index==15){ //fully inside
-                        CGContextSetFillColorWithColor(context, [UIColor colorWithRed:1 green:1 blue:0 alpha:0.3].CGColor);
+                        UIColor *fillColor;
+                        if(!fillColor)fillColor = [UIColor colorWithRed:1 green:1 blue:0 alpha:0.3];
+                        CGContextSetFillColorWithColor(context, fillColor.CGColor);
                         CGContextFillRect(context, CGRectMake(x0, y0, grid, grid));
                     }
                 }
@@ -431,7 +432,13 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
             
         }
     }
-
+    
+    free(gridValues);
+    free(gridBinaries);
+    free(centralGridValues);
+    free(centralBinaries);
+    
+    
     
     BOOL bDrawOutline = YES; //draw metaball circle
     if(bDrawOutline){
@@ -440,7 +447,7 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
             MetaBall *metaBall = self.metaBallModel.metaBalls[i];
             float r = metaBall.size;
             float diameter = 2*r;
-            CGContextAddEllipseInRect(context, CGRectMake(metaBall.location.x-r, metaBall.location.y-r, diameter, diameter));
+            CGContextAddEllipseInRect(context, CGRectMake(metaBall.x-r, metaBall.y-r, diameter, diameter));
             
             if(self.panIndex == i){
                 CGContextSetStrokeColorWithColor(context, [UIColor greenColor].CGColor); //on-pan gesture

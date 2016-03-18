@@ -12,9 +12,11 @@
 @interface MetaBall : NSObject
 
 @property float size; //size of this metaball, the radius.
-@property CGPoint location; //location of this metabal
+@property float x;
+@property float y;
+@property float z;
 
--(instancetype)initWithSize:(float)size location:(CGPoint)location;
+-(instancetype)initWithSize:(float)size x:(float)x y:(float)y z:(float)z;
 
 //f(xi,yi,Si, x,y)::= r<=Si ? 1.0 : Si/r   {r=|(xi,yi), (x,y)|}
 -(float)intensityWithX:(float)x y:(float)y goo:(float)goo;

@@ -23,22 +23,27 @@ static inline float distance(float x1, float y1, float x2, float y2)
 
 @implementation MetaBall
 
--(instancetype)initWithSize:(float)size location:(CGPoint)location
+-(instancetype)initWithSize:(float)size x:(float)x y:(float)y z:(float)z
 {
     self = [super init];
-    self.size = size;
-    self.location = location;
+    if(self){
+        _size = size;
+        _x = x;
+        _y = y;
+        _z = z;
+    }
     return self;
 }
 
 -(NSString *)description
 {
-    return [NSString stringWithFormat:@"MetaBall[size=%.2f, location=(%.2f,%.2f)]", self.size, self.location.x, self.location.y];
+    return [NSString stringWithFormat:@"MetaBall[size=%.2f, location=(%.2f,%.2f,%.2f)]", self.size, self.x, self.y, self.z];
 }
 
 -(float)intensityWithX:(float)x y:(float)y goo:(float)goo
 {
-    float dis = distance(self.location.x, self.location.y, x, y);
+    float dis = distance(self.x, self.y, x, y);
+//    float v = dis<=self.size ? 1.0 : self.size/dis;
     float v = dis<=self.size ? 1.0 : self.size/pow(dis, goo);
     return v;
 }

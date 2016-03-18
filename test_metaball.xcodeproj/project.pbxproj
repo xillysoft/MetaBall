@@ -16,6 +16,7 @@
 		610370431C8D747300658331 /* MetaBallView.m in Sources */ = {isa = PBXBuildFile; fileRef = 610370421C8D747300658331 /* MetaBallView.m */; };
 		610370461C8D752B00658331 /* MetaBall.m in Sources */ = {isa = PBXBuildFile; fileRef = 610370451C8D752B00658331 /* MetaBall.m */; };
 		610370491C8D75F500658331 /* MetaBallModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 610370481C8D75F500658331 /* MetaBallModel.m */; };
+		614BB33D1C9BF176005414D0 /* GridValue.m in Sources */ = {isa = PBXBuildFile; fileRef = 614BB33C1C9BF176005414D0 /* GridValue.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,8 @@
 		610370451C8D752B00658331 /* MetaBall.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MetaBall.m; sourceTree = "<group>"; };
 		610370471C8D75F500658331 /* MetaBallModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MetaBallModel.h; path = ../MetaBallModel.h; sourceTree = "<group>"; };
 		610370481C8D75F500658331 /* MetaBallModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MetaBallModel.m; path = ../MetaBallModel.m; sourceTree = "<group>"; };
+		614BB33B1C9BF176005414D0 /* GridValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GridValue.h; path = ../GridValue.h; sourceTree = "<group>"; };
+		614BB33C1C9BF176005414D0 /* GridValue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GridValue.m; path = ../GridValue.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +78,8 @@
 				610370481C8D75F500658331 /* MetaBallModel.m */,
 				610370411C8D747300658331 /* MetaBallView.h */,
 				610370421C8D747300658331 /* MetaBallView.m */,
+				614BB33B1C9BF176005414D0 /* GridValue.h */,
+				614BB33C1C9BF176005414D0 /* GridValue.m */,
 				610370301C8D745B00658331 /* ViewController.h */,
 				610370311C8D745B00658331 /* ViewController.m */,
 				610370331C8D745B00658331 /* Main.storyboard */,
@@ -167,6 +172,7 @@
 				610370321C8D745B00658331 /* ViewController.m in Sources */,
 				6103702F1C8D745B00658331 /* AppDelegate.m in Sources */,
 				610370431C8D747300658331 /* MetaBallView.m in Sources */,
+				614BB33D1C9BF176005414D0 /* GridValue.m in Sources */,
 				610370491C8D75F500658331 /* MetaBallModel.m in Sources */,
 				610370461C8D752B00658331 /* MetaBall.m in Sources */,
 				6103702C1C8D745B00658331 /* main.m in Sources */,
@@ -318,6 +324,7 @@
 				610370401C8D745B00658331 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
