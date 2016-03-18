@@ -27,7 +27,7 @@
 
 -(NSString *)description
 {
-    return [NSString stringWithFormat:@"MetaBallModel[goo=%.2f, threshold=%.2f, numOfMetaBalls=%d]", self.goo, self.threshold, self.metaBalls.count];
+    return [NSString stringWithFormat:@"MetaBallModel[goo=%.2f, threshold=%.2f, numOfMetaBalls=%d]", self.goo, self.threshold, (int)self.metaBalls.count];
     
 }
 

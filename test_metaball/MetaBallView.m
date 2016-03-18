@@ -239,47 +239,69 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
     const float threshold = self.metaBallModel.threshold; //intensity threshold of metaball model
     const float goo = self.metaBallModel.goo; //goo of metaball model
     
-    //TODO: triangulate (make 2d vertices)
-    CGMutablePathRef path = CGPathCreateMutable();
-//    CGContextSetStrokeColorWithColor(context, [UIColor redColor].CGColor);
-//    CGContextSetFillColorWithColor(context, [UIColor yellowColor].CGColor);
-//    CGPathDrawingMode pathDrawingMode = kCGPathFill;
-    for(int y0=0; y0<size.height-grid; y0+=grid){
-        for(int x0=0; x0<size.width-grid; x0+=grid){
-            int x1 = x0+grid; //right corner of grid
-            int y1 = y0+grid; //bottom corner of grid
-
-            float d0 = 0;
-            float d1 = 0;
-            float d2 = 0;
-            float d3 = 0;
-            float dCentral = 0;
-            //f(xi, yi, Si)::= r<=Si ? 1.0 : Si/r   {r=|(xi,yi), (x,y)|}
+    //compute and store grid values
+    const int numRowGrids = size.height/grid;
+    const int numColumnGrids = size.width/grid;
+    NSMutableArray<NSNumber *> *gridValues = [NSMutableArray arrayWithCapacity:(numRowGrids+1)*(numColumnGrids+1)];
+    NSMutableArray<NSNumber *> *gridBinaries = [NSMutableArray arrayWithCapacity:gridValues.count];
+    for(int r=0; r < numRowGrids + 1; r++){
+        for(int c=0; c < numColumnGrids + 1; c++){
+            const float x = c*grid;
+            const float y = r*grid;
+            float sumxy = 0;
             for(MetaBall *metaBall in self.metaBallModel.metaBalls){
-                float msize = metaBall.size;
-                float mx = metaBall.location.x;
-                float my = metaBall.location.y;
-                float m0 = distance(x0, y0, mx, my)<=msize ? 1 : metaball(msize, x0, y0, mx, my, goo);
-                float m1 = distance(x1, y0, mx, my)<=msize ? 1 : metaball(msize, x1, y0, mx, my, goo);
-                float m2 = distance(x1, y1, mx, my)<=msize ? 1 : metaball(msize, x1, y1, mx, my, goo);
-                float m3 = distance(x0, y1, mx, my)<=msize ? 1 : metaball(msize, x0, y1, mx, my, goo);
-                float mCentral = metaball(msize, x0+grid/2, y0+grid/2, mx, my, goo);
-                
-                d0 += m0;
-                d1 += m1;
-                d2 += m2;
-                d3 += m3;
-                dCentral += mCentral;
+                float intensity = [metaBall intensityWithX:x y:y goo:goo];
+                sumxy += intensity;
             }
+            [gridValues addObject:@(sumxy)];
+            BOOL b = sumxy-threshold >= 0;
+            [gridBinaries addObject:@(b)];
+        }
+    }
+    
+    
+    //compute and store grid central values
+    NSMutableArray<NSNumber *> *centralGridValues = [NSMutableArray arrayWithCapacity:numRowGrids*numColumnGrids];
+    NSMutableArray<NSNumber *> *centralGridBinaries = [NSMutableArray arrayWithCapacity:centralGridValues.count];
+    float xCentralOff = grid/2;
+    float yCentralOff = grid/2;
+    for(int r=0; r<numRowGrids; r++){
+        for(int c=0; c<numColumnGrids; c++){
+            float x = xCentralOff + c*grid;
+            float y = yCentralOff + r*grid;
+            float sumxy = 0;
+            for(MetaBall *metaBall in self.metaBallModel.metaBalls){
+                float v = [metaBall intensityWithX:x y:y goo:goo];
+                sumxy += v;
+            }
+            [centralGridValues addObject:@(sumxy)];
+            BOOL b = sumxy-threshold >= 0;
+            [centralGridBinaries addObject:@(b)];
+        }
+    }
+    
 
-            BOOL b0 = d0-threshold >= 0;
-            BOOL b1 = d1-threshold >= 0;
-            BOOL b2 = d2-threshold >= 0;
-            BOOL b3 = d3-threshold >= 0;
-            BOOL bCentral = dCentral-threshold >= 0;
-
-            unsigned index = b0 | (b1<<1) | (b2<<2) | (b3<<3); //4 bit representation, 16 cases totally
+    for(int r=0; r<numRowGrids; r++){
+        for(int c=0; c<numColumnGrids; c++){
+            const float x0 = c*grid;
+            const float y0 = r*grid;
+            const float x1= x0+grid;
+            const float y1 = y0+grid;
             
+            const int offset = r*(numColumnGrids+1)+c;
+            const float d0 = gridValues[offset].floatValue; //[r][c];
+            const float d1 = gridValues[offset+1].floatValue; //[r][c+1]
+            const float d2 = gridValues[offset+numColumnGrids+1+1].floatValue; //[r+1][c+1]
+            const float d3 = gridValues[offset+numColumnGrids+1].floatValue; //[r+1][c]
+            const float dCentral = centralGridValues[r*numColumnGrids+c].floatValue; //[r][c]
+            
+            const BOOL b0 = gridBinaries[offset].boolValue; //[r][c];
+            const BOOL b1 = gridBinaries[offset+1].boolValue; //[r][c+1]
+            const BOOL b2 = gridBinaries[offset+numColumnGrids+1+1].boolValue; //[r+1][c+1]
+            const BOOL b3 = gridBinaries[offset+numColumnGrids+1].boolValue; //[r+1][c]
+            const BOOL bCentral = centralGridBinaries[r*numColumnGrids+c].boolValue; //[r][c]
+            unsigned index = b0 | (b1<<1) | (b2<<2) | (b3<<3); //4 bit representation, 16 cases totally
+
             int half = grid/2;
                 
             unsigned xOffTop = grid*(threshold-d0)/(d1-d0);
@@ -409,17 +431,7 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
             
         }
     }
-    
-    { //stroke generated outline
-        CGContextBeginPath(context);
-        CGContextAddPath(context, path);
-//        CGContextClosePath(context);
-        CGContextSetLineWidth(context, 2);
-        CGContextSetStrokeColorWithColor(context, [UIColor redColor].CGColor);
-        CGContextSetFillColorWithColor(context, [UIColor greenColor].CGColor);
-//        CGContextStrokePath(context);
-        CGContextDrawPath(context, kCGPathFillStroke);
-    }
+
     
     BOOL bDrawOutline = YES; //draw metaball circle
     if(bDrawOutline){
