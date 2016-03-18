@@ -7,11 +7,13 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 //computed grid value
 @interface GridValue : NSObject
 
 @property(readwrite, nonatomic) float intensity;
-@property(readwrite, nonatomic) BOOL binary;
+@property(readwrite, nonatomic) BOOL binary; //inside: 1; outside:0;
+@property(readwrite, nonatomic) UIColor *color; //color of this grid
 
 @end

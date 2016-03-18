@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
+#import <UIKit/UIKit.h>
 
 @interface MetaBall : NSObject
 
@@ -15,6 +16,7 @@
 @property float x;
 @property float y;
 @property float z;
+@property UIColor *color;
 
 -(instancetype)initWithSize:(float)size x:(float)x y:(float)y z:(float)z;
 

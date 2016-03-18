@@ -223,7 +223,8 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
 
 - (void)drawRect:(CGRect)rect //paint metaballs by marching square algorithm
 {
-    NSTimeInterval t0 = [NSDate date].timeIntervalSince1970;
+    
+    NSDate *t0 = [NSDate date];
     
     if(self.useNaivePainting)
         [self _drawRect:rect];
@@ -240,7 +241,7 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
     const int numRowGrids = size.height/grid;
     const int numColumnGrids = size.width/grid;
     float *gridValues = (float *)malloc(sizeof(float)*(numRowGrids+1)*(numColumnGrids+1));
-    BOOL *gridBinaries = (BOOL *)malloc(sizeof(BOOL)*(numRowGrids+1)*(numColumnGrids+1));
+    BOOL *gridInside = (BOOL *)malloc(sizeof(BOOL)*(numRowGrids+1)*(numColumnGrids+1));
     for(int r=0; r < numRowGrids + 1; r++){
         for(int c=0; c < numColumnGrids + 1; c++){
             const float x = c*grid;
@@ -252,32 +253,11 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
             }
             gridValues[r*(numColumnGrids+1)+c] = sumxy;
             BOOL b = sumxy-threshold >= 0;
-            gridBinaries[r*(numColumnGrids+1)+c] = b;
+            gridInside[r*(numColumnGrids+1)+c] = b;
         }
     }
-    
-    
-    //compute and store grid central values
-    float *centralGridValues = (float *)malloc(sizeof(float)*numRowGrids*numColumnGrids);
-    BOOL *centralBinaries = (BOOL *)malloc(sizeof(BOOL)*numRowGrids*numColumnGrids);
-    float xCentralOff = grid/2;
-    float yCentralOff = grid/2;
-    for(int r=0; r<numRowGrids; r++){
-        for(int c=0; c<numColumnGrids; c++){
-            float x = xCentralOff + c*grid;
-            float y = yCentralOff + r*grid;
-            float sumxy = 0;
-            for(MetaBall *metaBall in self.metaBallModel.metaBalls){
-                float v = [metaBall intensityWithX:x y:y goo:goo];
-                sumxy += v;
-            }
-            centralGridValues[r*numColumnGrids+c] = sumxy;
-            BOOL b = sumxy-threshold >= 0;
-            centralBinaries[r*numColumnGrids+c] = b;
-        }
-    }
-    
 
+    //butriangulate grids
     for(int r=0; r<numRowGrids; r++){
         for(int c=0; c<numColumnGrids; c++){
             const float x0 = c*grid;
@@ -286,30 +266,31 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
             const float y1 = y0+grid;
             
             const int offset = r*(numColumnGrids+1)+c;
-            const float d0 = gridValues[offset]; //[r][c];
-            const float d1 = gridValues[offset+1]; //[r][c+1]
-            const float d2 = gridValues[offset+numColumnGrids+1+1]; //[r+1][c+1]
-            const float d3 = gridValues[offset+numColumnGrids+1]; //[r+1][c]
-            const float dCentral = centralGridValues[r*numColumnGrids+c]; //[r][c]
+            const float d0 = gridValues[offset]; //[r][c]; top-left
+            const float d1 = gridValues[offset+1]; //[r][c+1]; top-right
+            const float d2 = gridValues[offset+numColumnGrids+1+1]; //[r+1][c+1]; bottom-right
+            const float d3 = gridValues[offset+numColumnGrids+1]; //[r+1][c]; bottom-left
+
             
-            const BOOL b0 = gridBinaries[offset]; //[r][c];
-            const BOOL b1 = gridBinaries[offset+1]; //[r][c+1]
-            const BOOL b2 = gridBinaries[offset+numColumnGrids+1+1]; //[r+1][c+1]
-            const BOOL b3 = gridBinaries[offset+numColumnGrids+1]; //[r+1][c]
-            const BOOL bCentral = centralBinaries[r*numColumnGrids+c]; //[r][c]
-            unsigned index = b0 | (b1<<1) | (b2<<2) | (b3<<3); //4 bit representation, 16 cases totally
+            const BOOL b0 = gridInside[offset]; //[r][c];
+            const BOOL b1 = gridInside[offset+1]; //[r][c+1]
+            const BOOL b2 = gridInside[offset+numColumnGrids+1+1]; //[r+1][c+1]
+            const BOOL b3 = gridInside[offset+numColumnGrids+1]; //[r+1][c]
+            unsigned gridTypeIndex = b0 | (b1<<1) | (b2<<2) | (b3<<3); //4 bit representation, 16 cases totally
 
             int half = grid/2;
-                
-            unsigned xOffTop = grid*(threshold-d0)/(d1-d0);
-            unsigned xOffBottom = grid*(threshold-d3)/(d2-d3);
-            unsigned yOffLeft = grid*(threshold-d0)/(d3-d0);
-            unsigned yOffRight = grid*(threshold-d1)/(d2-d1);
+            
+            //calculate intersection point (over threshold) on edge of grid via interpolation
+            //t:=(T-a0)/(a1-a0), mid:=(1-t)*V0+t*V1, V0=0 so mid=t*V1
+            float xMidTopOff = grid*(threshold-d0)/(d1-d0);
+            float xMidBottomOff = grid*(threshold-d3)/(d2-d3);
+            float yMidLeftOff = grid*(threshold-d0)/(d3-d0);
+            float yMidRightOff = grid*(threshold-d1)/(d2-d1);
             if(! self.interpolation){ //use mid-way
-                xOffTop = half;
-                xOffBottom = half;
-                yOffLeft = half;
-                yOffRight = half;
+                xMidTopOff = half;
+                xMidBottomOff = half;
+                yMidLeftOff = half;
+                yMidRightOff = half;
             }
             
             BOOL bFillMarchingSquare = YES;
@@ -325,63 +306,53 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
 //                float yMidLeft = y0 + yOffLeft;
 //                float yMidRight = y0+yOffRight;
                 
-                switch(index){
+                switch(gridTypeIndex){
                     case 0:
                         break;
                     case 15:
                         rectangle(x0, y0, x0, y1, x1, y1, x1, y0, context);
                         break;
                     case 1:
-                        triangle(x0+xOffTop, y0,  x0,y0+yOffLeft, x0, y0, context);
+                        triangle(x0+xMidTopOff, y0,  x0,y0+yMidLeftOff, x0, y0, context);
                         break;
                     case 14:
-                        fan5(x0+xOffTop, y0, x0, y0+yOffLeft, x0,y1, x1,y1, x1, y0, context);
+                        fan5(x0+xMidTopOff, y0, x0, y0+yMidLeftOff, x0,y1, x1,y1, x1, y0, context);
                         break;
                     case 2:
-                        triangle(x0+xOffTop, y0, x1, y0, x1, y0+yOffRight, context);
+                        triangle(x0+xMidTopOff, y0, x1, y0, x1, y0+yMidRightOff, context);
                         break;
                     case 13:
-                        fan5(x0+xOffTop,y0, x0,y0, x0,y1, x1, y1, x1, y0+yOffRight, context);
+                        fan5(x0+xMidTopOff,y0, x0,y0, x0,y1, x1, y1, x1, y0+yMidRightOff, context);
                         break;
                     case 3:
-                        rectangle(x0, y0+yOffLeft, x1, y0+yOffRight, x1, y0, x0, y0, context);
+                        rectangle(x0, y0+yMidLeftOff, x1, y0+yMidRightOff, x1, y0, x0, y0, context);
                         break;
                     case 12:
-                        rectangle(x0, y0+yOffLeft, x0, y1, x1, y1, x1, y0+yOffRight, context);
+                        rectangle(x0, y0+yMidLeftOff, x0, y1, x1, y1, x1, y0+yMidRightOff, context);
                         break;
                     case 4:
-                        triangle(x1, y0+yOffRight, x1, y1, x0+xOffBottom, y1, context);
+                        triangle(x1, y0+yMidRightOff, x1, y1, x0+xMidBottomOff, y1, context);
                         break;
                     case 11:
-                        fan5(x1, y0+yOffRight, x1, y0, x0, y0, x0, y1, x0+xOffBottom, y1, context);
+                        fan5(x1, y0+yMidRightOff, x1, y0, x0, y0, x0, y1, x0+xMidBottomOff, y1, context);
                         break;
                     case 6:
-                        rectangle(x0+xOffTop, y0, x0+xOffBottom, y1, x1,y1, x1, y0, context);
+                        rectangle(x0+xMidTopOff, y0, x0+xMidBottomOff, y1, x1,y1, x1, y0, context);
                         break;
                     case 9:
-                        rectangle(x0+xOffTop, y0, x0, y0, x0, y1, x0+xOffBottom, y1, context);
+                        rectangle(x0+xMidTopOff, y0, x0, y0, x0, y1, x0+xMidBottomOff, y1, context);
                         break;
                     case 7:
-                        fan5(x0, y0+yOffLeft, x0+xOffBottom, y1, x1, y1, x1, y0, x0, y0, context);
+                        fan5(x0, y0+yMidLeftOff, x0+xMidBottomOff, y1, x1, y1, x1, y0, x0, y0, context);
                         break;
                     case 8:
-                        triangle(x0, y0+yOffLeft, x0, y1, x0+xOffBottom, y1, context);
+                        triangle(x0, y0+yMidLeftOff, x0, y1, x0+xMidBottomOff, y1, context);
                         break;
                     case 5:
-                        if(bCentral){
-                            fan6(x0, y0+yOffLeft,  x0+xOffBottom, y1,  x1, y1,  x1, y0+yOffRight,  x0+xOffTop, y0,  x0, y0,  context);
-                        }else{
-                            triangle(x0, y0+yOffLeft,  x0+xOffTop, y0,  x0, y0, context);
-                            triangle(x0+xOffBottom, y1,  x1, y1,  x1, y0+yOffRight, context);
-                        }
+                            fan6(x0, y0+yMidLeftOff,  x0+xMidBottomOff, y1,  x1, y1,  x1, y0+yMidRightOff,  x0+xMidTopOff, y0,  x0, y0,  context);
                         break;
                     case 10:
-                        if(bCentral){
-                            fan6(x0, y0+yOffLeft,  x0, y1,  x0+xOffBottom, y1,  x1, y0+yOffRight,  x1, y0, x0+xOffTop, y0, context);
-                        }else{
-                            triangle(x0, y0+yOffLeft, x0, y1,  x0+xOffBottom, y1, context);
-                            triangle(x0+xOffTop, y0,  x1, y0+yOffRight,  x1, y0, context);
-                        }
+                        fan6(x0, y0+yMidLeftOff,  x0, y1,  x0+xMidBottomOff, y1,  x1, y0+yMidRightOff,  x1, y0, x0+xMidTopOff, y0, context);
                         break;
                 }
                 CGContextDrawPath(context, kCGPathFill);
@@ -396,7 +367,7 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
                     CGRect gridRect = CGRectMake(x0, y0, grid, grid);
                     CGContextStrokeRect(context, gridRect);
                     
-                    if(index==15){ //fully inside
+                    if(gridTypeIndex==15){ //fully inside
                         UIColor *fillColor;
                         if(!fillColor)fillColor = [UIColor colorWithRed:1 green:1 blue:0 alpha:0.3];
                         CGContextSetFillColorWithColor(context, fillColor.CGColor);
@@ -405,14 +376,11 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
                 }
                 BOOL bDrawValue = NO;
                 if(bDrawValue){
-                    NSString *str = [NSString stringWithFormat:@"%d", index];
+                    NSString *str = [NSString stringWithFormat:@"%d", gridTypeIndex];
                     NSDictionary *attri = @{NSFontAttributeName:[UIFont systemFontOfSize:10], NSForegroundColorAttributeName:[UIColor blueColor]};
                     CGSize fontsize = [str sizeWithAttributes:attri];
                     CGPoint point = CGPointMake(x0+(grid-fontsize.width)/2, y0+(grid-fontsize.height)/2);
                     [str drawAtPoint:point withAttributes:attri];
-                    
-                    NSString *strIntensity = [NSString stringWithFormat:@"%.1f", dCentral];
-                    [strIntensity drawAtPoint:CGPointMake(point.x, point.y+fontsize.height)  withAttributes:attri];
                 }
                 //fill grid corner circle
                 BOOL bFillGridCornerCircles = NO;
@@ -434,10 +402,7 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
     }
     
     free(gridValues);
-    free(gridBinaries);
-    free(centralGridValues);
-    free(centralBinaries);
-    
+    free(gridInside);
     
     
     BOOL bDrawOutline = YES; //draw metaball circle
@@ -460,8 +425,7 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
         
     }
     
-    NSTimeInterval t1 = [NSDate date].timeIntervalSince1970;
-    NSTimeInterval dt = t1 - t0;
+    NSTimeInterval dt = -[t0 timeIntervalSinceNow];
     NSString *strFps = [NSString stringWithFormat:@"FPS: %.1f", 1.0/dt];
     [strFps drawAtPoint:CGPointMake(10, 10) withAttributes:nil];
     
