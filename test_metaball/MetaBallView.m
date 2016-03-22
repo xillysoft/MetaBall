@@ -7,15 +7,7 @@
 //
 
 #import "MetaBallView.h"
-
-
-@interface MetaBallView()
-
-@property int panIndex;
-@property CGPoint panLastLocation;
-
-@end
-
+#import <OpenGLES/ES1/gl.h>
 
 static inline float distance2(float x1, float y1, float x2, float y2)
 {
@@ -45,46 +37,133 @@ float metaball(float size1, float x,  float y, float x1, float y1, float goo)
 //    return size1/distance(x, y, x1, y1);
 }
 
-void triangle(float x0, float y0, float x1, float y1, float x2, float y2, CGContextRef context)
+void triangle(float x0, float y0, float x1, float y1, float x2, float y2, void *context)
 {
-    CGContextMoveToPoint(context, x0, y0);
-    CGContextAddLineToPoint(context, x1, y1);
-    CGContextAddLineToPoint(context, x2, y2);
-    CGContextClosePath(context);
+    static float vertex[6];
+    vertex[0] = x0;
+    vertex[1] = y0;
+    vertex[2] = x1;
+    vertex[3] = y1;
+    vertex[4] = x2;
+    vertex[5] = y2;
+    glVertexPointer(2, GL_FLOAT, 0, vertex);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 3);
 }
 
 //must be in CCW winding
-void fan5(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, CGContextRef context)
+void fan5(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, void* context)
 {
-    CGContextMoveToPoint(context, x0, y0);
-    CGContextAddLineToPoint(context, x1, y1);
-    CGContextAddLineToPoint(context, x2, y2);
-    CGContextAddLineToPoint(context, x3, y3);
-    CGContextAddLineToPoint(context, x4, y4);
-    CGContextClosePath(context);
+    static float vertex[10];
+    vertex[0] = x0;
+    vertex[1] = y0;
+    vertex[2] = x1;
+    vertex[3] = y1;
+    vertex[4] = x2;
+    vertex[5] = y2;
+    vertex[6] = x3;
+    vertex[7] = y3;
+    vertex[8] = x4;
+    vertex[9] = y4;
+    
+    glVertexPointer(2, GL_FLOAT, 0, vertex);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 5);
 }
 
-void fan6(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float x5, float y5, CGContextRef context)
+void fan6(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float x5, float y5, void* context)
 {
-    CGContextMoveToPoint(context, x0, y0);
-    CGContextAddLineToPoint(context, x1, y1);
-    CGContextAddLineToPoint(context, x2, y2);
-    CGContextAddLineToPoint(context, x3, y3);
-    CGContextAddLineToPoint(context, x4, y4);
-    CGContextAddLineToPoint(context, x5, y5);
-    CGContextClosePath(context);
+    static float vertex[12];
+    vertex[0] = x0;
+    vertex[1] = y0;
+    vertex[2] = x1;
+    vertex[3] = y1;
+    vertex[4] = x2;
+    vertex[5] = y2;
+    vertex[6] = x3;
+    vertex[7] = y3;
+    vertex[8] = x4;
+    vertex[9] = y4;
+    vertex[10] = x5;
+    vertex[11] = y5;
+    
+    glVertexPointer(2, GL_FLOAT, 0, vertex);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
 }
 
-void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, CGContextRef context)
+void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, void* context)
 {
-    CGContextMoveToPoint(context, x0, y0);
-    CGContextAddLineToPoint(context, x1, y1);
-    CGContextAddLineToPoint(context, x2, y2);
-    CGContextAddLineToPoint(context, x3, y3);
-    CGContextClosePath(context);
+    static float vertex[8];
+    vertex[0] = x0;
+    vertex[1] = y0;
+    vertex[2] = x1;
+    vertex[3] = y1;
+    vertex[4] = x2;
+    vertex[5] = y2;
+    vertex[6] = x3;
+    vertex[7] = y3;
+
+    glVertexPointer(2, GL_FLOAT, 0, vertex);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
+
+
+@interface MetaBallView(){
+    GLfloat _left;
+    GLfloat _right;
+    GLfloat _bottom;
+    GLfloat _top;
+    GLfloat _zNear;
+    GLfloat _zFar;
+}
+
+@property int panIndex;
+@property CGPoint panLastLocation;
+
+@end
+
 
 @implementation MetaBallView
+
+-(instancetype)initWithCoder:(NSCoder *)aDecoder
+{
+    self = [super initWithCoder:aDecoder];
+    [self initGL];
+    return self;
+}
+
+-(void)initGL
+{
+    //set EAGL context
+    self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
+    [EAGLContext setCurrentContext:self.context];
+    
+    //register for self.bounds change notification
+    [self addObserver:self forKeyPath:@"bounds" options:0 context:NULL];
+    
+    glClearColor(0, 1, 1, 1);
+    
+}
+
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context
+{
+    if([keyPath isEqualToString:@"bounds"]){
+//        glViewport(0, 0, size.width, size.height);
+        
+        glMatrixMode(GL_PROJECTION);
+        _zNear = 1;
+        _zFar = 1000;
+        _left = -1;
+        _right = 1;
+        _bottom = -1;
+        _top = 1;
+        //        glOrthof(0, size.width, 0, size.height, _zNear, _zFar);
+//        glOrthof(0, 1/_right, 0, 1/_top, _zNear, _zFar);
+        //tgFOV::=left/zNear
+        glOrthof(_left, _right, _bottom, _top, _zNear, _zFar);
+        
+        glMatrixMode(GL_MODELVIEW);
+    }
+}
+
 
 -(void)setThreshold:(CGFloat)threshold
 {
@@ -134,7 +213,7 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
     
     CGPoint location = [recognizer locationInView:recognizer.view];
     int minMetaballSize = 10;
-    int maxMetaballSize = 50;
+    int maxMetaballSize = 40;
     float size = (arc4random() % (maxMetaballSize-minMetaballSize)) + minMetaballSize;
 
     MetaBall *metaBall = [[MetaBall alloc] initWithSize:size x:location.x y:location.y z:0];
@@ -179,64 +258,34 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
 }
 
 
--(void)_drawRect:(CGRect)rect //naively paint metaballs
-{
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    
-    int width = (int)self.bounds.size.width;
-    int height = (int)self.bounds.size.height;
-    
-    const float goo = self.metaBallModel.goo;
-    const float threshold = self.metaBallModel.threshold;
-    {
-        CGFloat grid = 3;
-        for(unsigned y=0; y<height; y+=grid){
-            for(unsigned x=0; x<width; x+=grid){
-                //compute metabball for location (x,y)
-                float sum = 0;
-                for(MetaBall *metaBall in self.metaBallModel.metaBalls){
-                    const BOOL bUseGoo = YES;
-                    const float dist = distance(x, y, metaBall.x, metaBall.y);
-                    float intensity;
-                    if(bUseGoo)
-                        intensity = metaBall.size/pow(dist, goo);
-                    else
-                        intensity = metaBall.size/dist;
-                    
-                    sum += intensity;
-                    if(sum >= threshold)
-                        break;
-                }
-                if(sum-threshold >= 0){
-                    UIColor *color = [[UIColor alloc] initWithRed:0 green:0 blue:1 alpha:0.25];
-                    CGContextSetFillColorWithColor(context, color.CGColor);
-                    CGContextFillRect(context, CGRectMake(x, y, grid, grid));
-                }
-                
-            }
-        }
-    }
-    
-}
-
-
-
 - (void)drawRect:(CGRect)rect //paint metaballs by marching square algorithm
 {
-    
-    NSDate *t0 = [NSDate date];
-    
-    if(self.useNaivePainting)
-        [self _drawRect:rect];
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glLoadIdentity();
+    glTranslatef(0, 0, -_zNear);
     
     CGSize size = self.bounds.size;
-    unsigned grid = self.gridSize;
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    //transform x:(0, width) ==> (_left, _right); y:(0, height) ==> (_bottom, _top)
+    glTranslatef(_left, _bottom, 0);
+    glScalef((_right-_left)/size.width, (_top-_bottom)/size.height, 1);
+    
+    //flip y-
+    //y'=-y+height  y:(0, height)==>y':(height, 0)
+    glTranslatef(0, size.height, 0);
+    glScalef(1, -1, 1);
+
+    //    NSDate *t0 = [NSDate date];
+
+    float grid = self.gridSize;
+    
     //    if(grid < 1) grid = 1;
     
-    CGContextRef context = UIGraphicsGetCurrentContext();
     const float threshold = self.metaBallModel.threshold; //intensity threshold of metaball model
     const float goo = self.metaBallModel.goo; //goo of metaball model
     
+
     //compute and store grid values
     const int numRowGrids = size.height/grid;
     const int numColumnGrids = size.width/grid;
@@ -256,6 +305,7 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
             gridInside[r*(numColumnGrids+1)+c] = b;
         }
     }
+
 
     //butriangulate grids
     for(int r=0; r<numRowGrids; r++){
@@ -295,108 +345,62 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
             
             BOOL bFillMarchingSquare = YES;
             if(bFillMarchingSquare) {
-                static UIColor *fillColor;
-                if(!fillColor) fillColor = [UIColor colorWithRed:1 green:0 blue:0 alpha:0.5];
-                CGContextSetFillColorWithColor(context, fillColor.CGColor);
-                CGContextSetStrokeColorWithColor(context, [UIColor yellowColor].CGColor);
-                CGContextBeginPath(context);
-                
+                glColor4f(1, 0, 0, 1);
 //                float xMidTop = x0 + xOffTop;
 //                float xMidBottom = x0 + xOffBottom;
 //                float yMidLeft = y0 + yOffLeft;
 //                float yMidRight = y0+yOffRight;
-                
                 switch(gridTypeIndex){
                     case 0:
                         break;
                     case 15:
-                        rectangle(x0, y0, x0, y1, x1, y1, x1, y0, context);
+                        rectangle(x0, y0, x0, y1, x1, y1, x1, y0, NULL);
                         break;
                     case 1:
-                        triangle(x0+xMidTopOff, y0,  x0,y0+yMidLeftOff, x0, y0, context);
+                        triangle(x0+xMidTopOff, y0,  x0,y0+yMidLeftOff, x0, y0, NULL);
                         break;
                     case 14:
-                        fan5(x0+xMidTopOff, y0, x0, y0+yMidLeftOff, x0,y1, x1,y1, x1, y0, context);
+                        fan5(x0+xMidTopOff, y0, x0, y0+yMidLeftOff, x0,y1, x1,y1, x1, y0, NULL);
                         break;
                     case 2:
-                        triangle(x0+xMidTopOff, y0, x1, y0, x1, y0+yMidRightOff, context);
+                        triangle(x0+xMidTopOff, y0, x1, y0, x1, y0+yMidRightOff, NULL);
                         break;
                     case 13:
-                        fan5(x0+xMidTopOff,y0, x0,y0, x0,y1, x1, y1, x1, y0+yMidRightOff, context);
+                        fan5(x0+xMidTopOff,y0, x0,y0, x0,y1, x1, y1, x1, y0+yMidRightOff, NULL);
                         break;
                     case 3:
-                        rectangle(x0, y0+yMidLeftOff, x1, y0+yMidRightOff, x1, y0, x0, y0, context);
+                        rectangle(x0, y0+yMidLeftOff, x1, y0+yMidRightOff, x1, y0, x0, y0, NULL);
                         break;
                     case 12:
-                        rectangle(x0, y0+yMidLeftOff, x0, y1, x1, y1, x1, y0+yMidRightOff, context);
+                        rectangle(x0, y0+yMidLeftOff, x0, y1, x1, y1, x1, y0+yMidRightOff, NULL);
                         break;
                     case 4:
-                        triangle(x1, y0+yMidRightOff, x1, y1, x0+xMidBottomOff, y1, context);
+                        triangle(x1, y0+yMidRightOff, x1, y1, x0+xMidBottomOff, y1, NULL);
                         break;
                     case 11:
-                        fan5(x1, y0+yMidRightOff, x1, y0, x0, y0, x0, y1, x0+xMidBottomOff, y1, context);
+                        fan5(x1, y0+yMidRightOff, x1, y0, x0, y0, x0, y1, x0+xMidBottomOff, y1, NULL);
                         break;
                     case 6:
-                        rectangle(x0+xMidTopOff, y0, x0+xMidBottomOff, y1, x1,y1, x1, y0, context);
+                        rectangle(x0+xMidTopOff, y0, x0+xMidBottomOff, y1, x1,y1, x1, y0, NULL);
                         break;
                     case 9:
-                        rectangle(x0+xMidTopOff, y0, x0, y0, x0, y1, x0+xMidBottomOff, y1, context);
+                        rectangle(x0+xMidTopOff, y0, x0, y0, x0, y1, x0+xMidBottomOff, y1, NULL);
                         break;
                     case 7:
-                        fan5(x0, y0+yMidLeftOff, x0+xMidBottomOff, y1, x1, y1, x1, y0, x0, y0, context);
+                        fan5(x0, y0+yMidLeftOff, x0+xMidBottomOff, y1, x1, y1, x1, y0, x0, y0, NULL);
                         break;
                     case 8:
-                        triangle(x0, y0+yMidLeftOff, x0, y1, x0+xMidBottomOff, y1, context);
+                        triangle(x0, y0+yMidLeftOff, x0, y1, x0+xMidBottomOff, y1, NULL);
                         break;
                     case 5:
-                            fan6(x0, y0+yMidLeftOff,  x0+xMidBottomOff, y1,  x1, y1,  x1, y0+yMidRightOff,  x0+xMidTopOff, y0,  x0, y0,  context);
+                            fan6(x0, y0+yMidLeftOff,  x0+xMidBottomOff, y1,  x1, y1,  x1, y0+yMidRightOff,  x0+xMidTopOff, y0,  x0, y0,  NULL);
                         break;
                     case 10:
-                        fan6(x0, y0+yMidLeftOff,  x0, y1,  x0+xMidBottomOff, y1,  x1, y0+yMidRightOff,  x1, y0, x0+xMidTopOff, y0, context);
+                        fan6(x0, y0+yMidLeftOff,  x0, y1,  x0+xMidBottomOff, y1,  x1, y0+yMidRightOff,  x1, y0, x0+xMidTopOff, y0, NULL);
                         break;
                 }
-                CGContextDrawPath(context, kCGPathFill);
+//                CGContextDrawPath(context, kCGPathFill);
             }
-            
-            
-            { //stroke grid
-                BOOL bStrikeGrid = NO;
-                if(bStrikeGrid){
-                    CGContextSetLineWidth(context, 1);
-                    CGContextSetStrokeColorWithColor(context, [UIColor grayColor].CGColor);
-                    CGRect gridRect = CGRectMake(x0, y0, grid, grid);
-                    CGContextStrokeRect(context, gridRect);
-                    
-                    if(gridTypeIndex==15){ //fully inside
-                        UIColor *fillColor;
-                        if(!fillColor)fillColor = [UIColor colorWithRed:1 green:1 blue:0 alpha:0.3];
-                        CGContextSetFillColorWithColor(context, fillColor.CGColor);
-                        CGContextFillRect(context, CGRectMake(x0, y0, grid, grid));
-                    }
-                }
-                BOOL bDrawValue = NO;
-                if(bDrawValue){
-                    NSString *str = [NSString stringWithFormat:@"%d", gridTypeIndex];
-                    NSDictionary *attri = @{NSFontAttributeName:[UIFont systemFontOfSize:10], NSForegroundColorAttributeName:[UIColor blueColor]};
-                    CGSize fontsize = [str sizeWithAttributes:attri];
-                    CGPoint point = CGPointMake(x0+(grid-fontsize.width)/2, y0+(grid-fontsize.height)/2);
-                    [str drawAtPoint:point withAttributes:attri];
-                }
-                //fill grid corner circle
-                BOOL bFillGridCornerCircles = NO;
-                if(bFillGridCornerCircles){
-                    CGFloat r = 2;
-                    CGFloat d = r*2;
-                    if(b0){
-                        CGContextSetFillColorWithColor(context, [UIColor yellowColor].CGColor);
-                    }else{
-                        CGContextSetFillColorWithColor(context, [UIColor grayColor].CGColor);
-                    }
-                    CGContextFillEllipseInRect(context, CGRectMake(x0-r, y0-r, d, d));
-                }
-            }
-            
-            
             
         }
     }
@@ -405,29 +409,12 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
     free(gridInside);
     
     
-    BOOL bDrawOutline = YES; //draw metaball circle
-    if(bDrawOutline){
-        //draw individual metabal
-        for(int i=0; i<self.metaBallModel.metaBalls.count; i++){
-            MetaBall *metaBall = self.metaBallModel.metaBalls[i];
-            float r = metaBall.size;
-            float diameter = 2*r;
-            CGContextAddEllipseInRect(context, CGRectMake(metaBall.x-r, metaBall.y-r, diameter, diameter));
-            
-            if(self.panIndex == i){
-                CGContextSetStrokeColorWithColor(context, [UIColor greenColor].CGColor); //on-pan gesture
-            }else{
-                CGContextSetStrokeColorWithColor(context, [UIColor darkGrayColor].CGColor);
-            }
-            CGContextSetLineWidth(context, 1);
-            CGContextDrawPath(context, kCGPathStroke);
-        }
-        
-    }
     
-    NSTimeInterval dt = -[t0 timeIntervalSinceNow];
-    NSString *strFps = [NSString stringWithFormat:@"FPS: %.1f", 1.0/dt];
-    [strFps drawAtPoint:CGPointMake(10, 10) withAttributes:nil];
+//    NSTimeInterval dt = -[t0 timeIntervalSinceNow];
+//    NSString *strFps = [NSString stringWithFormat:@"FPS: %.1f", 1.0/dt];
+//    [strFps drawAtPoint:CGPointMake(10, 10) withAttributes:nil];
+//    NSLog(@"--%@", strFps);
     
 }
 @end
+

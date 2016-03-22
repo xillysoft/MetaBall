@@ -9,6 +9,7 @@
 #import "ViewController.h"
 #import "MetaBallModel.h"
 #import "MetaBallView.h"
+#import <GLKit/GLKit.h>
 
 @interface ViewController ()
 @property (weak, nonatomic) IBOutlet MetaBallView *metaBallView;
@@ -29,7 +30,7 @@ int _rand(int low, int high)
 @implementation ViewController
 
 - (void)viewDidLoad {
-    [super viewDidLoad];
+    [super viewDidLoad];    
     // Do any additional setup after loading the view, typically from a nib.
     CGRect bounds = self.view.bounds;
     
@@ -42,8 +43,8 @@ int _rand(int low, int high)
         float width = bounds.size.width;
         float height = bounds.size.height;
         
-        int numberOfMetaBalls = 1;
-        float minMetaballSize = 6;
+        int numberOfMetaBalls = 2;
+        float minMetaballSize = 10;
         float maxMetaballSize = 40;
         for(int i=0; i<numberOfMetaBalls; i++){
             const float size = _rand(minMetaballSize, maxMetaballSize);
@@ -57,7 +58,7 @@ int _rand(int low, int high)
     
     self.metaBallView.metaBallModel = self.metaBallModel;
     
-    self.metaBallView.gridSize = 10;
+    self.metaBallView.gridSize = 5;
     self.metaBallView.threshold = 1.0;
     self.metaBallView.interpolation = YES;
     
@@ -93,6 +94,5 @@ int _rand(int low, int high)
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
-
 
 @end
