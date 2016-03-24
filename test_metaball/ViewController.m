@@ -15,8 +15,6 @@
 @property (weak, nonatomic) IBOutlet MetaBallView *metaBallView;
 @property(strong) MetaBallModel *metaBallModel;
 
-@property (weak, nonatomic) IBOutlet UISwitch *switchInterpolation;
-@property (weak, nonatomic) IBOutlet UISwitch *switchPaintNaive;
 @property (weak, nonatomic) IBOutlet UISlider *sliderGridSize;
 @property (weak, nonatomic) IBOutlet UILabel *labelGridSizeValue;
 
@@ -43,14 +41,14 @@ int _rand(int low, int high)
         float width = bounds.size.width;
         float height = bounds.size.height;
         
-        int numberOfMetaBalls = 2;
+        int numberOfMetaBalls = 3;
         float minMetaballSize = 10;
         float maxMetaballSize = 40;
         for(int i=0; i<numberOfMetaBalls; i++){
             const float size = _rand(minMetaballSize, maxMetaballSize);
             const float x = _rand(maxMetaballSize, width-maxMetaballSize*2);
             const float y = _rand(maxMetaballSize, height-maxMetaballSize*2);
-            MetaBall *metaBall = [[MetaBall alloc] initWithSize:size x:x  y:y z:0];
+            MetaBall *metaBall = [[MetaBall alloc] initWithSize:size x:x  y:y];
 
             [self.metaBallModel.metaBalls addObject:metaBall];
         }
@@ -60,34 +58,19 @@ int _rand(int low, int high)
     
     self.metaBallView.gridSize = 5;
     self.metaBallView.threshold = 1.0;
-    self.metaBallView.interpolation = YES;
+
     
-    self.sliderGridSize.minimumValue = 2;
-    self.sliderGridSize.maximumValue = 50;
+    self.sliderGridSize.minimumValue = 1;
+    self.sliderGridSize.maximumValue = 20;
     self.sliderGridSize.value = self.metaBallView.gridSize;
     self.labelGridSizeValue.text = [NSString stringWithFormat:@"%.0f", self.sliderGridSize.value];
     [self.sliderGridSize addTarget:self action:@selector(sliderGridSizeValueChanged:) forControlEvents:UIControlEventValueChanged];
-
-    self.switchInterpolation.on = self.metaBallView.interpolation;
-    [self.switchInterpolation addTarget:self action:@selector(switchInterpolationValueChanged:) forControlEvents:UIControlEventValueChanged];
-
-    self.metaBallView.useNaivePainting = NO;
-    self.switchPaintNaive.on = self.metaBallView.useNaivePainting;
-    [self.switchPaintNaive addTarget:self action:@selector(switchPaintNaiveValueChanged:) forControlEvents:UIControlEventValueChanged];
 }
 
 -(void)sliderGridSizeValueChanged:(UISlider *)slider
 {
     self.labelGridSizeValue.text = [NSString stringWithFormat:@"%.0f", slider.value];
     self.metaBallView.gridSize = slider.value;
-}
--(void)switchInterpolationValueChanged:(UISwitch *)switcher
-{
-    self.metaBallView.interpolation = switcher.on;
-}
--(void)switchPaintNaiveValueChanged:(UISwitch *)switcher
-{
-    self.metaBallView.useNaivePainting = switcher.on;
 }
 
 - (void)didReceiveMemoryWarning {

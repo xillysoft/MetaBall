@@ -9,102 +9,21 @@
 #import "MetaBallView.h"
 #import <OpenGLES/ES1/gl.h>
 
-static inline float distance2(float x1, float y1, float x2, float y2)
+#define EPSILION 1e-10
+
+//(p-p0)/(p1-p0)==(isolevel-v0)/(v1-v0),
+//p=(isolevel-v0)/(v1-v0)*(p1-p0)+p0
+//使用时注意参数顺序
+static inline float interpolate(float isolevel, float p1, float p0, float v1, float v0)
 {
-    float dx = x2-x1;
-    float dy = y2-y1;
-    return (dx*dx+dy*dy);
+    if(ABS(v1-v0) < EPSILION)
+        return p0;
+    return (isolevel-v0)*(p1-p0)/(v1-v0)+p0;
 }
 
-static inline float distance(float x1, float y1, float x2, float y2)
-{
-    return sqrt(distance2(x1, y1, x2, y2));
-}
 
-//quick invert of square root
-float InvSqrt(float x){
-    float xhalf = 0.5f * x;
-    int i = *(int*)&x;            // store floating-point bits in integer
-    i = 0x5f3759df - (i >> 1);    // initial guess for Newton's method
-    x = *(float*)&i;              // convert new bits into float
-    x = x*(1.5f - xhalf*x*x);     // One round of Newton's method
-    return x;
-}
 
-float metaball(float size1, float x,  float y, float x1, float y1, float goo)
-{
-    return size1/pow(distance(x, y, x1, y1), goo);
-//    return size1/distance(x, y, x1, y1);
-}
-
-void triangle(float x0, float y0, float x1, float y1, float x2, float y2, void *context)
-{
-    static float vertex[6];
-    vertex[0] = x0;
-    vertex[1] = y0;
-    vertex[2] = x1;
-    vertex[3] = y1;
-    vertex[4] = x2;
-    vertex[5] = y2;
-    glVertexPointer(2, GL_FLOAT, 0, vertex);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 3);
-}
-
-//must be in CCW winding
-void fan5(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, void* context)
-{
-    static float vertex[10];
-    vertex[0] = x0;
-    vertex[1] = y0;
-    vertex[2] = x1;
-    vertex[3] = y1;
-    vertex[4] = x2;
-    vertex[5] = y2;
-    vertex[6] = x3;
-    vertex[7] = y3;
-    vertex[8] = x4;
-    vertex[9] = y4;
-    
-    glVertexPointer(2, GL_FLOAT, 0, vertex);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 5);
-}
-
-void fan6(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float x5, float y5, void* context)
-{
-    static float vertex[12];
-    vertex[0] = x0;
-    vertex[1] = y0;
-    vertex[2] = x1;
-    vertex[3] = y1;
-    vertex[4] = x2;
-    vertex[5] = y2;
-    vertex[6] = x3;
-    vertex[7] = y3;
-    vertex[8] = x4;
-    vertex[9] = y4;
-    vertex[10] = x5;
-    vertex[11] = y5;
-    
-    glVertexPointer(2, GL_FLOAT, 0, vertex);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
-}
-
-void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, void* context)
-{
-    static float vertex[8];
-    vertex[0] = x0;
-    vertex[1] = y0;
-    vertex[2] = x1;
-    vertex[3] = y1;
-    vertex[4] = x2;
-    vertex[5] = y2;
-    vertex[6] = x3;
-    vertex[7] = y3;
-
-    glVertexPointer(2, GL_FLOAT, 0, vertex);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-}
-
+//---------------------------------------------------
 
 @interface MetaBallView(){
     GLfloat _left;
@@ -123,10 +42,28 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
 
 @implementation MetaBallView
 
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        [self initGL];
+    }
+    return self;
+}
+
 -(instancetype)initWithCoder:(NSCoder *)aDecoder
 {
     self = [super initWithCoder:aDecoder];
     [self initGL];
+    return self;
+}
+
+- (instancetype)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        [self initGL];
+    }
     return self;
 }
 
@@ -136,19 +73,12 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
     self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
     [EAGLContext setCurrentContext:self.context];
     
-    //register for self.bounds change notification
-    [self addObserver:self forKeyPath:@"bounds" options:0 context:NULL];
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    self.drawableDepthFormat = GLKViewDrawableDepthFormat24;
     
-    glClearColor(0, 1, 1, 1);
-    
-}
-
--(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context
-{
-    if([keyPath isEqualToString:@"bounds"]){
-//        glViewport(0, 0, size.width, size.height);
-        
-        glMatrixMode(GL_PROJECTION);
+    glMatrixMode(GL_PROJECTION);
+    {
         _zNear = 1;
         _zFar = 1000;
         _left = -1;
@@ -156,12 +86,13 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
         _bottom = -1;
         _top = 1;
         //        glOrthof(0, size.width, 0, size.height, _zNear, _zFar);
-//        glOrthof(0, 1/_right, 0, 1/_top, _zNear, _zFar);
+        //        glOrthof(0, 1/_right, 0, 1/_top, _zNear, _zFar);
         //tgFOV::=left/zNear
         glOrthof(_left, _right, _bottom, _top, _zNear, _zFar);
-        
-        glMatrixMode(GL_MODELVIEW);
     }
+    glMatrixMode(GL_MODELVIEW);
+    
+    glClearColor(0, 1, 1, 1);
 }
 
 
@@ -176,19 +107,6 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
     _gridSize = gridSize;
     [self setNeedsDisplay];
 }
-
--(void)setInterpolation:(BOOL)interpolation
-{
-    _interpolation = interpolation;
-    [self setNeedsDisplay];
-}
-
--(void)setUseNaivePainting:(BOOL)useNaivePainting
-{
-    _useNaivePainting = useNaivePainting;
-    [self setNeedsDisplay];
-}
-
 
 -(void)didMoveToSuperview
 {
@@ -216,7 +134,7 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
     int maxMetaballSize = 40;
     float size = (arc4random() % (maxMetaballSize-minMetaballSize)) + minMetaballSize;
 
-    MetaBall *metaBall = [[MetaBall alloc] initWithSize:size x:location.x y:location.y z:0];
+    MetaBall *metaBall = [[MetaBall alloc] initWithSize:size x:location.x y:location.y];
     [self.metaBallModel.metaBalls addObject:metaBall];
     [self setNeedsDisplay];
 }
@@ -278,42 +196,44 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
 
     //    NSDate *t0 = [NSDate date];
 
-    float grid = self.gridSize;
+    float gridSize = self.gridSize;
     
     //    if(grid < 1) grid = 1;
     
-    const float threshold = self.metaBallModel.threshold; //intensity threshold of metaball model
+    const float isolevel = self.metaBallModel.threshold; //intensity threshold of metaball model
     const float goo = self.metaBallModel.goo; //goo of metaball model
     
 
     //compute and store grid values
-    const int numRowGrids = size.height/grid;
-    const int numColumnGrids = size.width/grid;
+    const int numRowGrids = size.height/gridSize;
+    const int numColumnGrids = size.width/gridSize;
     float *gridValues = (float *)malloc(sizeof(float)*(numRowGrids+1)*(numColumnGrids+1));
     BOOL *gridInside = (BOOL *)malloc(sizeof(BOOL)*(numRowGrids+1)*(numColumnGrids+1));
     for(int r=0; r < numRowGrids + 1; r++){
         for(int c=0; c < numColumnGrids + 1; c++){
-            const float x = c*grid;
-            const float y = r*grid;
+            const float x = c*gridSize;
+            const float y = r*gridSize;
             float sumxy = 0;
             for(MetaBall *metaBall in self.metaBallModel.metaBalls){
                 float intensity = [metaBall intensityWithX:x y:y goo:goo];
                 sumxy += intensity;
             }
             gridValues[r*(numColumnGrids+1)+c] = sumxy;
-            BOOL b = sumxy-threshold >= 0;
+            BOOL b = sumxy-isolevel >= 0;
             gridInside[r*(numColumnGrids+1)+c] = b;
         }
     }
 
 
-    //butriangulate grids
+    glColor4f(1, 0, 0, 1);
+
+    //triangulate grids
     for(int r=0; r<numRowGrids; r++){
         for(int c=0; c<numColumnGrids; c++){
-            const float x0 = c*grid;
-            const float y0 = r*grid;
-            const float x1= x0+grid;
-            const float y1 = y0+grid;
+            const float x0 = c*gridSize;
+            const float y0 = r*gridSize;
+//            const float x1= x0+gridSize;
+//            const float y1 = y0+gridSize;
             
             const int offset = r*(numColumnGrids+1)+c;
             const float d0 = gridValues[offset]; //[r][c]; top-left
@@ -326,82 +246,94 @@ void rectangle(float x0, float y0, float x1, float y1, float x2, float y2, float
             const BOOL b1 = gridInside[offset+1]; //[r][c+1]
             const BOOL b2 = gridInside[offset+numColumnGrids+1+1]; //[r+1][c+1]
             const BOOL b3 = gridInside[offset+numColumnGrids+1]; //[r+1][c]
-            unsigned gridTypeIndex = b0 | (b1<<1) | (b2<<2) | (b3<<3); //4 bit representation, 16 cases totally
+            unsigned gridIndex = b0 | (b1<<1) | (b2<<2) | (b3<<3); //4 bit representation:<v3,v2,v1,v0>, 16 cases totally
 
-            int half = grid/2;
+            if(gridIndex == 0) //4 vertices are completely outside
+                continue;
+
+            static const int edgeTable[] = { //edgeTable[gridIndex]为相关联的边,(使用bitfield表示法:<e3,e2,e1,e0>)
+                0, //0:0000-->0000
+                9, //1:0001-->1001
+                3, //2:0010-->0011
+                10, //3:0011-->1010
+                6, //4:0100-->0110
+                15, //5:0101-->1111
+                5, //6:0110-->0101
+                12, //7:0111-->1100
+                12, //8:1000-->1100
+                5, //9:1001-->0101
+                15, //10:1010-->1111
+                6, //11:1011-->0110
+                10, //12:1100-->1010
+                3, //13:1101-->0011
+                9, //14:1110-->1001
+                0//15:1111-->0000
+            };
             
-            //calculate intersection point (over threshold) on edge of grid via interpolation
-            //t:=(T-a0)/(a1-a0), mid:=(1-t)*V0+t*V1, V0=0 so mid=t*V1
-            float xMidTopOff = grid*(threshold-d0)/(d1-d0);
-            float xMidBottomOff = grid*(threshold-d3)/(d2-d3);
-            float yMidLeftOff = grid*(threshold-d0)/(d3-d0);
-            float yMidRightOff = grid*(threshold-d1)/(d2-d1);
-            if(! self.interpolation){ //use mid-way
-                xMidTopOff = half;
-                xMidBottomOff = half;
-                yMidLeftOff = half;
-                yMidRightOff = half;
+            //交点序列为(e3, v3, e2, v2, e1, v1, e0, v0) 每个交点用一个二进制位表示
+            static const int triFanTable[][7] = { //gridindex=0..15 (2^4)，每个grid最多可产生6个顶点的多边形
+                {-1, }, //0:0000-->()
+                {0, 1, 7, -1, }, //1:0001-->(v0,e3,e0)
+                {2, 1, 3, -1, }, //2:0010-->(v1,e0,e1)
+                {0, 2, 3, 7, -1, }, //3:0011-->(v0,v1,e1,e3)
+                {4, 3, 5, -1, }, //4:0100-->(v2,e1,e2)
+                {0, 1, 3, 4, 5, 7, -1, }, //5:0101-->(v0,e0,e1,v2,e2,e3)
+                {1, 2, 4, 5, -1, }, //6:0110-->(e0,v1,v2,e2)
+                {0, 2, 4, 5, 7, -1, }, //7:0111-->(v0,v1,v2,e2,e3)
+                {7, 6, 5, -1, }, //8:1000-->(e3,v3,e2)
+                {0, 1, 5, 6, -1, }, //9:1001-->(v0,e0,e2,v3)
+                {1, 2, 3, 5, 6, 7, -1, }, //10:1010-->(e0,v1,e1,e2,v2,e3)
+                {0, 2, 3, 5, 6, -1, }, //11:1011-->(v0,v1,e1,e2,v3)
+                {7, 3, 4, 6, -1, }, //12:1100-->(e3,e1,v2,v3)
+                {0, 1, 3, 4, 6, -1, }, //13:1101-->(v0,e0,e1, v2,v3)
+                {1, 2, 4, 6, 7, -1, }, //14:1110-->(e0,v1,v2,v3,e3)
+                {6, 4, 2, 0, -1, } //15:1111-->(v3,v2,v1,v0)
+            };
+            
+            int edgeIndex = edgeTable[gridIndex];
+            
+            //交点序列为(e3, v3, e2, v2, e1, v1, e0, v0)
+            float vertlist[16]; //相交顶点列表。8*2 4个顶点，4条边上的交点，一共使用8个顶点
+            vertlist[0] = 0; //v0.x
+            vertlist[1] = 0; //v0.y
+            
+            if(edgeIndex & (1<<0)){ //e0
+                vertlist[2] = interpolate(isolevel, gridSize, 0, d1, d0); //e0.x
+                vertlist[3] = 0; //e0.y
+            }
+            vertlist[4] = gridSize; //v1.x
+            vertlist[5] = 0; //v1.y
+            if(edgeIndex & (1<<1)){ //e1
+                vertlist[6] = gridSize; //e1.x
+                vertlist[7] = interpolate(isolevel, gridSize, 0, d2, d1); //e1.y
+            }
+            vertlist[8] = gridSize; //v2.x
+            vertlist[9] = gridSize; //v2.y
+            if(edgeIndex & (1<<2)){ //e2
+                vertlist[10] = interpolate(isolevel, gridSize, 0, d2, d3); //e2.x
+                vertlist[11] = gridSize; //e2.y
+            }
+            vertlist[12] = 0; //v3.x
+            vertlist[13] = gridSize; //v3.y
+            if(edgeIndex & (1<<3)){ //e3
+                vertlist[14] = 0; //e3.x
+                vertlist[15] = interpolate(isolevel, gridSize, 0, d3, d0); //e3.y
             }
             
-            BOOL bFillMarchingSquare = YES;
-            if(bFillMarchingSquare) {
-                glColor4f(1, 0, 0, 1);
-//                float xMidTop = x0 + xOffTop;
-//                float xMidBottom = x0 + xOffBottom;
-//                float yMidLeft = y0 + yOffLeft;
-//                float yMidRight = y0+yOffRight;
-                switch(gridTypeIndex){
-                    case 0:
-                        break;
-                    case 15:
-                        rectangle(x0, y0, x0, y1, x1, y1, x1, y0, NULL);
-                        break;
-                    case 1:
-                        triangle(x0+xMidTopOff, y0,  x0,y0+yMidLeftOff, x0, y0, NULL);
-                        break;
-                    case 14:
-                        fan5(x0+xMidTopOff, y0, x0, y0+yMidLeftOff, x0,y1, x1,y1, x1, y0, NULL);
-                        break;
-                    case 2:
-                        triangle(x0+xMidTopOff, y0, x1, y0, x1, y0+yMidRightOff, NULL);
-                        break;
-                    case 13:
-                        fan5(x0+xMidTopOff,y0, x0,y0, x0,y1, x1, y1, x1, y0+yMidRightOff, NULL);
-                        break;
-                    case 3:
-                        rectangle(x0, y0+yMidLeftOff, x1, y0+yMidRightOff, x1, y0, x0, y0, NULL);
-                        break;
-                    case 12:
-                        rectangle(x0, y0+yMidLeftOff, x0, y1, x1, y1, x1, y0+yMidRightOff, NULL);
-                        break;
-                    case 4:
-                        triangle(x1, y0+yMidRightOff, x1, y1, x0+xMidBottomOff, y1, NULL);
-                        break;
-                    case 11:
-                        fan5(x1, y0+yMidRightOff, x1, y0, x0, y0, x0, y1, x0+xMidBottomOff, y1, NULL);
-                        break;
-                    case 6:
-                        rectangle(x0+xMidTopOff, y0, x0+xMidBottomOff, y1, x1,y1, x1, y0, NULL);
-                        break;
-                    case 9:
-                        rectangle(x0+xMidTopOff, y0, x0, y0, x0, y1, x0+xMidBottomOff, y1, NULL);
-                        break;
-                    case 7:
-                        fan5(x0, y0+yMidLeftOff, x0+xMidBottomOff, y1, x1, y1, x1, y0, x0, y0, NULL);
-                        break;
-                    case 8:
-                        triangle(x0, y0+yMidLeftOff, x0, y1, x0+xMidBottomOff, y1, NULL);
-                        break;
-                    case 5:
-                            fan6(x0, y0+yMidLeftOff,  x0+xMidBottomOff, y1,  x1, y1,  x1, y0+yMidRightOff,  x0+xMidTopOff, y0,  x0, y0,  NULL);
-                        break;
-                    case 10:
-                        fan6(x0, y0+yMidLeftOff,  x0, y1,  x0+xMidBottomOff, y1,  x1, y0+yMidRightOff,  x1, y0, x0+xMidTopOff, y0, NULL);
-                        break;
-                }
-//                CGContextDrawPath(context, kCGPathFill);
+            //构造多边扇形
+            int numFanVertices = 0;
+            float triangleFan[12]; //多边扇形最多由6个顶点组成，每个顶点由(x,y)两个分量组成，最多共6*2=12个分量
+            for(int i=0; triFanTable[gridIndex][i]!=-1; i++){
+                const int vertIndex = triFanTable[gridIndex][i];
+                triangleFan[i*2+0] = vertlist[vertIndex*2+0];
+                triangleFan[i*2+1] = vertlist[vertIndex*2+1];
+                numFanVertices++;
             }
-            
+            //draw this triangle-fan
+            glVertexPointer(2, GL_FLOAT, 0, triangleFan);
+            glTranslatef(x0, y0, 0);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, numFanVertices);
+            glTranslatef(-x0, -y0, 0);
         }
     }
     

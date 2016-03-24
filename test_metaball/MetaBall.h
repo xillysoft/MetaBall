@@ -15,10 +15,9 @@
 @property float size; //size of this metaball, the radius.
 @property float x;
 @property float y;
-@property float z;
 @property UIColor *color;
 
--(instancetype)initWithSize:(float)size x:(float)x y:(float)y z:(float)z;
+-(instancetype)initWithSize:(float)size x:(float)x y:(float)y;
 
 //f(xi,yi,Si, x,y)::= r<=Si ? 1.0 : Si/r   {r=|(xi,yi), (x,y)|}
 -(float)intensityWithX:(float)x y:(float)y goo:(float)goo;
