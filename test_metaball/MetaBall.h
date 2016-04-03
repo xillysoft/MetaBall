@@ -12,10 +12,10 @@
 
 @interface MetaBall : NSObject
 
-@property float size; //size of this metaball, the radius.
-@property float x;
-@property float y;
-@property UIColor *color;
+@property(nonatomic) float size; //size of this metaball, the radius.
+@property(nonatomic) float x;
+@property(nonatomic) float y;
+@property(nonatomic) UIColor *color;
 
 -(instancetype)initWithSize:(float)size x:(float)x y:(float)y;
 

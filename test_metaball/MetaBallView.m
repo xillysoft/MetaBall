@@ -224,7 +224,6 @@ static inline float interpolate(float isolevel, float p1, float p0, float v1, fl
         }
     }
 
-
     glColor4f(1, 0, 0, 1);
 
     //triangulate grids
@@ -271,7 +270,7 @@ static inline float interpolate(float isolevel, float p1, float p0, float v1, fl
             };
             
             //交点序列为(e3, v3, e2, v2, e1, v1, e0, v0) 每个交点用一个二进制位表示
-            static const int triFanTable[][7] = { //gridindex=0..15 (2^4)，每个grid最多可产生6个顶点的多边形
+            static const int triangleFanTable[][7] = { //gridindex=0..15 (2^4)，每个grid最多可产生6个顶点的多边形
                 {-1, }, //0:0000-->()
                 {0, 1, 7, -1, }, //1:0001-->(v0,e3,e0)
                 {2, 1, 3, -1, }, //2:0010-->(v1,e0,e1)
@@ -321,19 +320,22 @@ static inline float interpolate(float isolevel, float p1, float p0, float v1, fl
             }
             
             //构造多边扇形
-            int numFanVertices = 0;
+            int numVerticesOfFan = 0;
             float triangleFan[12]; //多边扇形最多由6个顶点组成，每个顶点由(x,y)两个分量组成，最多共6*2=12个分量
-            for(int i=0; triFanTable[gridIndex][i]!=-1; i++){
-                const int vertIndex = triFanTable[gridIndex][i];
+            for(int i=0; triangleFanTable[gridIndex][i]!=-1; i++){
+                const int vertIndex = triangleFanTable[gridIndex][i];
                 triangleFan[i*2+0] = vertlist[vertIndex*2+0];
                 triangleFan[i*2+1] = vertlist[vertIndex*2+1];
-                numFanVertices++;
+                numVerticesOfFan++;
             }
             //draw this triangle-fan
-            glVertexPointer(2, GL_FLOAT, 0, triangleFan);
-            glTranslatef(x0, y0, 0);
-            glDrawArrays(GL_TRIANGLE_FAN, 0, numFanVertices);
-            glTranslatef(-x0, -y0, 0);
+            {
+                glVertexPointer(2, GL_FLOAT, 0, triangleFan);
+                glTranslatef(x0, y0, 0);
+                glDrawArrays(GL_TRIANGLE_FAN, 0, numVerticesOfFan);
+//                glDrawArrays(GL_LINE_LOOP, 0, numVerticesOfFan);
+                glTranslatef(-x0, -y0, 0);
+            }
         }
     }
     

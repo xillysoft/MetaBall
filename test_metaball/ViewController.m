@@ -17,6 +17,8 @@
 
 @property (weak, nonatomic) IBOutlet UISlider *sliderGridSize;
 @property (weak, nonatomic) IBOutlet UILabel *labelGridSizeValue;
+@property (weak, nonatomic) IBOutlet UISlider *sliderGooValue;
+@property (weak, nonatomic) IBOutlet UILabel *labelGooValue;
 
 @end
 
@@ -35,15 +37,15 @@ int _rand(int low, int high)
     //initialize MetaBall model
     self.metaBallModel = [[MetaBallModel alloc] init];
     {
-        self.metaBallModel.goo = 1.0;
+        self.metaBallModel.goo = 1.2;
         self.metaBallModel.threshold = 1;
         
         float width = bounds.size.width;
         float height = bounds.size.height;
         
-        int numberOfMetaBalls = 3;
+        int numberOfMetaBalls = 10;
         float minMetaballSize = 10;
-        float maxMetaballSize = 40;
+        float maxMetaballSize = 20;
         for(int i=0; i<numberOfMetaBalls; i++){
             const float size = _rand(minMetaballSize, maxMetaballSize);
             const float x = _rand(maxMetaballSize, width-maxMetaballSize*2);
@@ -56,7 +58,7 @@ int _rand(int low, int high)
     
     self.metaBallView.metaBallModel = self.metaBallModel;
     
-    self.metaBallView.gridSize = 5;
+    self.metaBallView.gridSize = 10;
     self.metaBallView.threshold = 1.0;
 
     
@@ -65,12 +67,25 @@ int _rand(int low, int high)
     self.sliderGridSize.value = self.metaBallView.gridSize;
     self.labelGridSizeValue.text = [NSString stringWithFormat:@"%.0f", self.sliderGridSize.value];
     [self.sliderGridSize addTarget:self action:@selector(sliderGridSizeValueChanged:) forControlEvents:UIControlEventValueChanged];
+    
+    self.sliderGooValue.minimumValue = 0.9;
+    self.sliderGooValue.maximumValue = 1.5;
+    self.sliderGooValue.value = 1.1;
+    self.labelGooValue.text = [NSString stringWithFormat:@"%.2f", self.sliderGooValue.value];
+    [self.sliderGooValue addTarget:self action:@selector(sliderGooValueChanged:) forControlEvents:UIControlEventValueChanged];
 }
 
 -(void)sliderGridSizeValueChanged:(UISlider *)slider
 {
     self.labelGridSizeValue.text = [NSString stringWithFormat:@"%.0f", slider.value];
     self.metaBallView.gridSize = slider.value;
+}
+
+-(void)sliderGooValueChanged:(UISlider *)slider
+{
+    self.labelGooValue.text = [NSString stringWithFormat:@"%.2f", self.sliderGooValue.value];
+    self.metaBallModel.goo = slider.value;
+    [self.metaBallView setNeedsDisplay];
 }
 
 - (void)didReceiveMemoryWarning {

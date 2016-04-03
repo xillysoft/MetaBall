@@ -19,20 +19,35 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="qNh-S8-cSj" customClass="MetaBallView">
-                                <rect key="frame" x="20" y="55" width="560" height="535"/>
+                                <rect key="frame" x="20" y="90" width="560" height="500"/>
                                 <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                             </view>
                             <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="nJU-nh-9lk">
-                                <rect key="frame" x="92" y="20" width="397" height="31"/>
+                                <rect key="frame" x="92" y="55" width="397" height="31"/>
                             </slider>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Grid Size" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hJd-FK-EWd">
-                                <rect key="frame" x="30" y="27" width="59" height="17"/>
+                                <rect key="frame" x="30" y="62" width="59" height="17"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="gridSizeValue" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="HMA-QI-gyY">
-                                <rect key="frame" x="492" y="27" width="88" height="17"/>
+                                <rect key="frame" x="492" y="62" width="88" height="17"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <slider opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="1" minValue="0.80000000000000004" maxValue="2" translatesAutoresizingMaskIntoConstraints="NO" id="kyt-Dw-We4">
+                                <rect key="frame" x="53" y="20" width="464" height="31"/>
+                            </slider>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="goo: " textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Cz0-cA-AwW">
+                                <rect key="frame" x="22" y="26" width="33" height="17"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="goo-value" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Dt-KM-WNF">
+                                <rect key="frame" x="515" y="26" width="65" height="17"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
@@ -41,21 +56,30 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="hJd-FK-EWd" firstAttribute="centerY" secondItem="nJU-nh-9lk" secondAttribute="centerY" id="255-cJ-4iL"/>
+                            <constraint firstItem="nJU-nh-9lk" firstAttribute="top" secondItem="kyt-Dw-We4" secondAttribute="bottom" constant="5" id="3Lu-lr-vlS"/>
                             <constraint firstItem="qNh-S8-cSj" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="7yg-d0-65T"/>
-                            <constraint firstItem="nJU-nh-9lk" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="9ba-eg-Q9q"/>
                             <constraint firstAttribute="trailingMargin" secondItem="HMA-QI-gyY" secondAttribute="trailing" id="BeF-E6-Oyc"/>
                             <constraint firstAttribute="trailingMargin" secondItem="qNh-S8-cSj" secondAttribute="trailing" id="FmL-EO-YOV"/>
                             <constraint firstItem="HMA-QI-gyY" firstAttribute="centerY" secondItem="nJU-nh-9lk" secondAttribute="centerY" id="J0M-ka-765"/>
+                            <constraint firstItem="5Dt-KM-WNF" firstAttribute="leading" secondItem="kyt-Dw-We4" secondAttribute="trailing" id="Msk-1x-n3j"/>
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="qNh-S8-cSj" secondAttribute="bottom" constant="10" id="THo-cW-GYV"/>
                             <constraint firstItem="HMA-QI-gyY" firstAttribute="leading" secondItem="nJU-nh-9lk" secondAttribute="trailing" constant="5" id="V47-QG-Usk"/>
                             <constraint firstItem="qNh-S8-cSj" firstAttribute="top" secondItem="nJU-nh-9lk" secondAttribute="bottom" constant="5" id="YvJ-L2-Mf9"/>
+                            <constraint firstItem="kyt-Dw-We4" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="byg-jb-ow4"/>
+                            <constraint firstItem="Cz0-cA-AwW" firstAttribute="centerY" secondItem="kyt-Dw-We4" secondAttribute="centerY" id="cal-PF-9di"/>
+                            <constraint firstItem="kyt-Dw-We4" firstAttribute="leading" secondItem="Cz0-cA-AwW" secondAttribute="trailing" id="ebv-lM-iKB"/>
                             <constraint firstItem="nJU-nh-9lk" firstAttribute="leading" secondItem="hJd-FK-EWd" secondAttribute="trailing" constant="5" id="fUE-ze-rjR"/>
                             <constraint firstItem="hJd-FK-EWd" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="10" id="fVJ-p4-Of0"/>
+                            <constraint firstItem="Cz0-cA-AwW" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="10" id="idt-KF-7FK"/>
+                            <constraint firstItem="kyt-Dw-We4" firstAttribute="centerY" secondItem="5Dt-KM-WNF" secondAttribute="centerY" id="oe4-wo-d3Z"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="5Dt-KM-WNF" secondAttribute="trailing" id="y5q-IK-9m1"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="labelGooValue" destination="5Dt-KM-WNF" id="kE1-n0-WF8"/>
                         <outlet property="labelGridSizeValue" destination="HMA-QI-gyY" id="hvE-Wp-Puf"/>
                         <outlet property="metaBallView" destination="qNh-S8-cSj" id="7Jt-pB-FIm"/>
+                        <outlet property="sliderGooValue" destination="kyt-Dw-We4" id="Ejn-wH-ooT"/>
                         <outlet property="sliderGridSize" destination="nJU-nh-9lk" id="eXb-IZ-sZN"/>
                     </connections>
                 </viewController>
