@@ -36,7 +36,7 @@ static inline float interpolate(float isolevel, float p1, float p0, float v1, fl
 
 @property int panIndex;
 @property CGPoint panLastLocation;
-
+@property CADisplayLink *displayLink;
 @end
 
 
@@ -122,6 +122,21 @@ static inline float interpolate(float isolevel, float p1, float p0, float v1, fl
     UILongPressGestureRecognizer *longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPressGesture:)];
     [longPressGestureRecognizer requireGestureRecognizerToFail:panGestureRecognizer];
     [self addGestureRecognizer:longPressGestureRecognizer];
+    
+    self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(displayLinkFired:)];
+    [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+}
+
+-(void)displayLinkFired:(CADisplayLink *)displayLink
+{
+    [self setNeedsDisplay];
+}
+
+-(void)willMoveToSuperview:(UIView *)newSuperview
+{
+    if(newSuperview == nil){
+        [self.displayLink invalidate];
+    }
 }
 
 -(void)handleLongPressGesture:(UILongPressGestureRecognizer *)recognizer

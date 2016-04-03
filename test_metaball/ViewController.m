@@ -58,7 +58,7 @@ int _rand(int low, int high)
     
     self.metaBallView.metaBallModel = self.metaBallModel;
     
-    self.metaBallView.gridSize = 10;
+    self.metaBallView.gridSize = 5;
     self.metaBallView.threshold = 1.0;
 
     
