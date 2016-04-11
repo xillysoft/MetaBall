@@ -307,7 +307,7 @@ static inline float interpolate(float isolevel, float p1, float p0, float v1, fl
             int edgeIndex = edgeTable[gridIndex];
             
             //交点序列为(e3, v3, e2, v2, e1, v1, e0, v0)
-            float vertlist[16]; //相交顶点列表。8*2 4个顶点，4条边上的交点，一共使用8个顶点
+            float vertlist[16]; //相交顶点列表。8*2 4个顶点，4条边上的交点，一共使用8个顶点, 每个顶点2个元素(x,y)
             vertlist[0] = 0; //v0.x
             vertlist[1] = 0; //v0.y
             
@@ -339,8 +339,8 @@ static inline float interpolate(float isolevel, float p1, float p0, float v1, fl
             float triangleFan[12]; //多边扇形最多由6个顶点组成，每个顶点由(x,y)两个分量组成，最多共6*2=12个分量
             for(int i=0; triangleFanTable[gridIndex][i]!=-1; i++){
                 const int vertIndex = triangleFanTable[gridIndex][i];
-                triangleFan[i*2+0] = vertlist[vertIndex*2+0];
-                triangleFan[i*2+1] = vertlist[vertIndex*2+1];
+                triangleFan[i*2+0] = vertlist[vertIndex*2+0]; //.x
+                triangleFan[i*2+1] = vertlist[vertIndex*2+1]; //.y
                 numVerticesOfFan++;
             }
             //draw this triangle-fan
